@@ -234,7 +234,35 @@ GO
 -- Índice para búsquedas por fechas
 CREATE INDEX idx_ContratoAlquiler_Fechas ON ContratoAlquiler(FechaInicio, FechaVencimiento);
 GO
-
+--Tabla para almacenar los datos de las garantias sobre los contratos
+Create table ContratoGarantia(
+codigo int identity(1,1),
+CodigoContrato int,
+CodigoGarante int,
+Constraint pk_ContratoGarantia primary key(Codigo),
+Constraint fk_ContratoGarantiaGarante foreign key(CodigoGarante) references garante(codigo),
+Constraint fk_ContratoGarantiaContrato foreign key(CodigoContrato) references ContratoAlquiler(Codigo));
+GO
+-- Índice para búsquedas rápidas por CódigoContrato
+CREATE INDEX idx_ContratoGarantia_Contrato ON ContratoGarantia(CodigoContrato);
+GO
+-- Índice para búsquedas rápidas por CódigoGarante
+CREATE INDEX idx_ContratoGarantia_Garante ON ContratoGarantia(CodigoGarante);
+GO
+-- Índice compuesto para búsquedas por CódigoContrato y CódigoGarante
+CREATE INDEX idx_ContratoGarantia_Compuesto ON ContratoGarantia(CodigoContrato, CodigoGarante);
+GO
+-- Crear tabla de pagos
+CREATE TABLE Pagos (
+    Codigo INT IDENTITY(1,1) PRIMARY KEY,
+    CodigoContrato INT NOT NULL,
+    FechaPago DATE NOT NULL,
+    Monto DECIMAL(10,2) NOT NULL,
+    MetodoPago VARCHAR(50) NOT NULL,
+    EstadoPago VARCHAR(50) NOT NULL,
+    CONSTRAINT fk_Pagos_Contrato FOREIGN KEY (CodigoContrato) REFERENCES ContratoAlquiler(Codigo)
+);
+GO
 INSERT INTO provincia (Codigo, provincia) VALUES
 (1, 'Buenos Aires'),
 (2, 'Buenos Aires-GBA'),
@@ -2679,6 +2707,328 @@ INNER JOIN
 INNER JOIN 
     provincia p ON i.CodigoProvincia = p.Codigo;
 GO
+
+-- Procedimientos almacenados para la base de datos RealState
+
+-- Procedimiento para insertar una provincia
+CREATE PROCEDURE InsertarProvincia
+    @Codigo INT,
+    @Provincia VARCHAR(255)
+AS
+BEGIN
+    INSERT INTO Provincia (Codigo, provincia)
+    VALUES (@Codigo, @Provincia);
+END;
+GO
+
+-- Procedimiento para actualizar una provincia
+CREATE PROCEDURE ActualizarProvincia
+    @Codigo INT,
+    @Provincia VARCHAR(255)
+AS
+BEGIN
+    UPDATE Provincia
+    SET provincia = @Provincia
+    WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para eliminar una provincia
+CREATE PROCEDURE EliminarProvincia
+    @Codigo INT
+AS
+BEGIN
+    DELETE FROM Provincia WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para insertar una localidad
+CREATE PROCEDURE InsertarLocalidad
+    @Codigo INT,
+    @CodigoProvincia INT,
+    @Localidad VARCHAR(255)
+AS
+BEGIN
+    INSERT INTO Localidades (Codigo, CodigoProvincia, localidad)
+    VALUES (@Codigo, @CodigoProvincia, @Localidad);
+END;
+GO
+
+-- Procedimiento para actualizar una localidad
+CREATE PROCEDURE ActualizarLocalidad
+    @Codigo INT,
+    @CodigoProvincia INT,
+    @Localidad VARCHAR(255)
+AS
+BEGIN
+    UPDATE Localidades
+    SET CodigoProvincia = @CodigoProvincia, localidad = @Localidad
+    WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para eliminar una localidad
+CREATE PROCEDURE EliminarLocalidad
+    @Codigo INT
+AS
+BEGIN
+    DELETE FROM Localidades WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para insertar un inquilino
+CREATE PROCEDURE InsertarInquilino
+    @CUIL VARCHAR(11),
+    @Nombre VARCHAR(50),
+    @Direccion VARCHAR(50),
+    @Telefono VARCHAR(50),
+    @Email VARCHAR(50),
+    @CodigoLocalidad INT,
+    @CodigoProvincia INT
+AS
+BEGIN
+    INSERT INTO Inquilino (CUIL, Nombre, Direccion, Telefono, Email, CodigoLocalidad, CodigoProvincia)
+    VALUES (@CUIL, @Nombre, @Direccion, @Telefono, @Email, @CodigoLocalidad, @CodigoProvincia);
+END;
+GO
+
+-- Procedimiento para actualizar un inquilino
+CREATE PROCEDURE ActualizarInquilino
+    @Codigo INT,
+    @CUIL VARCHAR(11),
+    @Nombre VARCHAR(50),
+    @Direccion VARCHAR(50),
+    @Telefono VARCHAR(50),
+    @Email VARCHAR(50),
+    @CodigoLocalidad INT,
+    @CodigoProvincia INT
+AS
+BEGIN
+    UPDATE Inquilino
+    SET CUIL = @CUIL, Nombre = @Nombre, Direccion = @Direccion, Telefono = @Telefono, Email = @Email,
+        CodigoLocalidad = @CodigoLocalidad, CodigoProvincia = @CodigoProvincia
+    WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para eliminar un inquilino
+CREATE PROCEDURE EliminarInquilino
+    @Codigo INT
+AS
+BEGIN
+    DELETE FROM Inquilino WHERE Codigo = @Codigo;
+END;
+GO
+-- Procedimiento para insertar un propietario
+CREATE PROCEDURE InsertarPropietario
+    @CUIL VARCHAR(11),
+    @Nombre VARCHAR(50),
+    @Direccion VARCHAR(50),
+    @Telefono VARCHAR(50),
+    @Email VARCHAR(50),
+    @CodigoLocalidad INT,
+    @CodigoProvincia INT
+AS
+BEGIN
+    INSERT INTO Propietario (CUIL, Nombre, Direccion, Telefono, Email, CodigoLocalidad, CodigoProvincia)
+    VALUES (@CUIL, @Nombre, @Direccion, @Telefono, @Email, @CodigoLocalidad, @CodigoProvincia);
+END;
+GO
+
+-- Procedimiento para actualizar un propietario
+CREATE PROCEDURE ActualizarPropietario
+    @Codigo INT,
+    @CUIL VARCHAR(11),
+    @Nombre VARCHAR(50),
+    @Direccion VARCHAR(50),
+    @Telefono VARCHAR(50),
+    @Email VARCHAR(50),
+    @CodigoLocalidad INT,
+    @CodigoProvincia INT
+AS
+BEGIN
+    UPDATE Propietario
+    SET CUIL = @CUIL, Nombre = @Nombre, Direccion = @Direccion, Telefono = @Telefono, Email = @Email,
+        CodigoLocalidad = @CodigoLocalidad, CodigoProvincia = @CodigoProvincia
+    WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para eliminar un propietario
+CREATE PROCEDURE EliminarPropietario
+    @Codigo INT
+AS
+BEGIN
+    DELETE FROM Propietario WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para insertar un garante
+CREATE PROCEDURE InsertarGarante
+    @CUIL VARCHAR(11),
+    @Nombre VARCHAR(50),
+    @Direccion VARCHAR(50),
+    @Telefono VARCHAR(50),
+    @Email VARCHAR(50),
+    @CodigoLocalidad INT,
+    @CodigoProvincia INT
+AS
+BEGIN
+    INSERT INTO Garante (CUIL, Nombre, Direccion, Telefono, Email, CodigoLocalidad, CodigoProvincia)
+    VALUES (@CUIL, @Nombre, @Direccion, @Telefono, @Email, @CodigoLocalidad, @CodigoProvincia);
+END;
+GO
+
+-- Procedimiento para actualizar un garante
+CREATE PROCEDURE ActualizarGarante
+    @Codigo INT,
+    @CUIL VARCHAR(11),
+    @Nombre VARCHAR(50),
+    @Direccion VARCHAR(50),
+    @Telefono VARCHAR(50),
+    @Email VARCHAR(50),
+    @CodigoLocalidad INT,
+    @CodigoProvincia INT
+AS
+BEGIN
+    UPDATE Garante
+    SET CUIL = @CUIL, Nombre = @Nombre, Direccion = @Direccion, Telefono = @Telefono, Email = @Email,
+        CodigoLocalidad = @CodigoLocalidad, CodigoProvincia = @CodigoProvincia
+    WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para eliminar un garante
+CREATE PROCEDURE EliminarGarante
+    @Codigo INT
+AS
+BEGIN
+    DELETE FROM Garante WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para insertar un contrato
+CREATE PROCEDURE InsertarContrato
+    @Codigo INT,
+    @CodigoInquilino INT,
+    @CodigoPropiedad INT,
+    @FechaInicio DATE,
+    @FechaFin DATE,
+    @Monto DECIMAL(10,2)
+AS
+BEGIN
+    INSERT INTO Contratos (Codigo, CodigoInquilino, CodigoPropiedad, FechaInicio, FechaFin, Monto)
+    VALUES (@Codigo, @CodigoInquilino, @CodigoPropiedad, @FechaInicio, @FechaFin, @Monto);
+END;
+GO
+
+-- Procedimiento para actualizar un contrato
+CREATE PROCEDURE ActualizarContrato
+    @Codigo INT,
+    @CodigoInquilino INT,
+    @CodigoPropiedad INT,
+    @FechaInicio DATE,
+    @FechaFin DATE,
+    @Monto DECIMAL(10,2)
+AS
+BEGIN
+    UPDATE Contratos
+    SET CodigoInquilino = @CodigoInquilino, CodigoPropiedad = @CodigoPropiedad,
+        FechaInicio = @FechaInicio, FechaFin = @FechaFin, Monto = @Monto
+    WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para eliminar un contrato
+CREATE PROCEDURE EliminarContrato
+    @Codigo INT
+AS
+BEGIN
+    DELETE FROM Contratos WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para insertar un pago
+CREATE PROCEDURE InsertarPago
+    @CodigoContrato INT,
+    @FechaPago DATE,
+    @Monto DECIMAL(10,2),
+    @MetodoPago VARCHAR(50),
+    @EstadoPago VARCHAR(50)
+AS
+BEGIN
+    INSERT INTO Pagos (CodigoContrato, FechaPago, Monto, MetodoPago, EstadoPago)
+    VALUES (@CodigoContrato, @FechaPago, @Monto, @MetodoPago, @EstadoPago);
+END;
+GO
+
+-- Procedimiento para actualizar un pago
+CREATE PROCEDURE ActualizarPago
+    @Codigo INT,
+    @CodigoContrato INT,
+    @FechaPago DATE,
+    @Monto DECIMAL(10,2),
+    @MetodoPago VARCHAR(50),
+    @EstadoPago VARCHAR(50)
+AS
+BEGIN
+    UPDATE Pagos
+    SET CodigoContrato = @CodigoContrato, FechaPago = @FechaPago, Monto = @Monto,
+        MetodoPago = @MetodoPago, EstadoPago = @EstadoPago
+    WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para eliminar un pago
+CREATE PROCEDURE EliminarPago
+    @Codigo INT
+AS
+BEGIN
+    DELETE FROM Pagos WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para insertar una propiedad
+CREATE PROCEDURE InsertarPropiedad
+    @Codigo INT,
+    @CodigoPropietario INT,
+    @Direccion VARCHAR(255),
+    @CodigoLocalidad INT,
+    @CodigoProvincia INT,
+    @Precio DECIMAL(10,2)
+AS
+BEGIN
+    INSERT INTO Propiedades (Codigo, CodigoPropietario, Direccion, CodigoLocalidad, CodigoProvincia, Precio)
+    VALUES (@Codigo, @CodigoPropietario, @Direccion, @CodigoLocalidad, @CodigoProvincia, @Precio);
+END;
+GO
+
+-- Procedimiento para actualizar una propiedad
+CREATE PROCEDURE ActualizarPropiedad
+    @Codigo INT,
+    @CodigoPropietario INT,
+    @Direccion VARCHAR(255),
+    @CodigoLocalidad INT,
+    @CodigoProvincia INT,
+    @Precio DECIMAL(10,2)
+AS
+BEGIN
+    UPDATE Propiedades
+    SET CodigoPropietario = @CodigoPropietario, Direccion = @Direccion,
+        CodigoLocalidad = @CodigoLocalidad, CodigoProvincia = @CodigoProvincia, Precio = @Precio
+    WHERE Codigo = @Codigo;
+END;
+GO
+
+-- Procedimiento para eliminar una propiedad
+CREATE PROCEDURE EliminarPropiedad
+    @Codigo INT
+AS
+BEGIN
+    DELETE FROM Propiedades WHERE Codigo = @Codigo;
+END;
+GO
+
 
 --vista para datos de las propiedades
 CREATE VIEW VistaPropiedadesCompletas AS
